@@ -1,0 +1,29 @@
+{
+    "name": "wieni/dead_letter_queue",
+    "type": "drupal-module",
+    "description": "A Drupal 8 module for separating queue items that can't be processed successfully.",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Wieni",
+            "email": "info@wieni.be"
+        }
+    ],
+    "require": {
+        "php": "^7.1 || ^8.0",
+        "drupal/core": "^8.5 || ^9.0",
+        "wieni/wmcodestyle": "^1.7"
+    },
+    "require-dev": {
+        "composer-runtime-api": "^2.0",
+        "ergebnis/composer-normalize": "^2.0"
+    },
+    "scripts": {
+        "coding-standards": [
+            "@composer normalize",
+            "rector process",
+            "php-cs-fixer fix --config=.php_cs.php",
+            "phpstan analyse"
+        ]
+    }
+}

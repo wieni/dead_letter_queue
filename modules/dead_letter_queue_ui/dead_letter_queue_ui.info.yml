@@ -1,0 +1,9 @@
+name: Dead-letter queue UI
+type: module
+description: Integrates the Dead-letter queue and Queue UI modules.
+core: 8.x
+core_version_requirement: ^8 || ^9
+package: Queues
+dependencies:
+    - drupal:system (>= 8.5)
+    - queue_ui

@@ -1,0 +1,7 @@
+services:
+    dead_letter_queue.queue.database:
+        class: Drupal\dead_letter_queue\Queue\DeadLetterQueueDatabaseFactory
+        arguments:
+            - '@database'
+            - '@plugin.manager.queue_worker'
+            - '@config.factory'

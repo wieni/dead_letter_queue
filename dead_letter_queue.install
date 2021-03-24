@@ -1,0 +1,26 @@
+<?php
+
+use Drupal\Core\Database\SchemaObjectDoesNotExistException;
+use Drupal\Core\Database\SchemaObjectExistsException;
+use Drupal\dead_letter_queue\Queue\DeadLetterDatabaseQueue;
+
+/**
+ * Add tries column to queue table
+ */
+function dead_letter_queue_update_8001(): string
+{
+    try {
+        \Drupal::database()->schema()->addField(DeadLetterDatabaseQueue::TABLE_NAME, 'tries', [
+            'type' => 'int',
+            'not null' => true,
+            'default' => 0,
+            'description' => 'Amount of times processing has been attempted.',
+        ]);
+    } catch (SchemaObjectDoesNotExistException $exception) {
+        return 'Queue table does not exist. Not adding field.';
+    } catch (SchemaObjectExistsException $exception) {
+        return 'Field already exists.';
+    }
+
+    return 'Successfully added field.';
+}

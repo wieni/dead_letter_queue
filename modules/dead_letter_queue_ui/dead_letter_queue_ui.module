@@ -1,0 +1,166 @@
+<?php
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Element;
+use Drupal\Core\Url;
+use Drupal\dead_letter_queue\Queue\DeadLetterQueueInterface;
+use Drupal\dead_letter_queue_ui\DeadLetterQueueUiInterface;
+
+/**
+ * Implements @see hook_form_FORM_ID_alter().
+ *
+ * @see Drupal\queue_ui\Form\OverviewForm
+ */
+function dead_letter_queue_ui_form_queue_ui_overview_form_alter(array &$form, FormStateInterface $formState, string $formId): void
+{
+    $queueUIManager = \Drupal::getContainer()->get('plugin.manager.queue_ui');
+    $queueFactory = \Drupal::getContainer()->get('queue');
+
+    $form['queues']['#header'] = _dead_letter_queue_ui_array_insert_after(
+        'items',
+        $form['queues']['#header'],
+        'tries',
+        t('Number of dead letters')
+    );
+
+    $form['queues']['#header'] = _dead_letter_queue_ui_array_insert_after(
+        'cron',
+        $form['queues']['#header'],
+        'max_tries',
+        t('Maximum amount of tries')
+    );
+
+    foreach (Element::children($form['queues']) as $queueName) {
+        $queue = $queueFactory->get($queueName);
+        $queueUi = $queueUIManager->fromQueueName($queueName);
+        $numberOfDeadLetters = 0;
+
+        if ($queueUi instanceof DeadLetterQueueUiInterface) {
+            $numberOfDeadLetters = $queueUi->getNumberOfDeadLetters($queueName);
+
+            $form['queues'][$queueName]['operations']['#links']['dead_letters'] = [
+                'title' => t('Dead letters'),
+                'url' => Url::fromRoute('dead_letter_queue_ui.dead_letters', ['queue_name' => $queueName]),
+            ];
+        }
+
+        $form['queues'][$queueName] = _dead_letter_queue_ui_array_insert_after(
+            'items',
+            $form['queues'][$queueName],
+            'tries',
+            [
+                '#markup' => $numberOfDeadLetters,
+            ]
+        );
+
+        $form['queues'][$queueName] = _dead_letter_queue_ui_array_insert_after(
+            'cron',
+            $form['queues'][$queueName],
+            'max_tries',
+            [
+                '#type' => 'number',
+                '#title' => t('Maximum amount of tries'),
+                '#title_display' => 'hidden',
+                '#value' => $queue instanceof DeadLetterQueueInterface ? $queue->getMaxTries() : 10,
+                '#parents' => [],
+                '#name' => sprintf('max_tries[%s]', $queueName),
+            ]
+        );
+    }
+
+    $form['max_tries'] = [
+        '#type' => 'value',
+    ];
+
+    $form['#submit'][] = '_dead_letter_queue_ui_form_queue_ui_overview_form_alter_submit';
+}
+
+function _dead_letter_queue_ui_form_queue_ui_overview_form_alter_submit(array &$form, FormStateInterface $formState): void
+{
+    $config = \Drupal::configFactory()->getEditable('dead_letter_queue.settings');
+
+    $existingMaxTries = array_reduce(
+        $config->get('max_tries'),
+        static function (?array $result, array $item) {
+            $result[$item['queue_name']] = $item['max_tries'];
+            return $result;
+        }
+    );
+
+    foreach ($formState->getValue('max_tries') as $name => $maxTries) {
+        $existingMaxTries[$name] = $maxTries;
+        $config->set(sprintf('max_tries.%s', $name), (int) $maxTries);
+    }
+
+    $config->set('queues', array_map(
+        static function (string $queueName, int $maxTries) {
+            return [
+                'queue_name' => $queueName,
+                'max_tries' => $maxTries,
+            ];
+        },
+        array_keys($existingMaxTries),
+        array_values($existingMaxTries),
+    ));
+
+    $config->save();
+}
+
+/**
+ * Implements @see hook_form_FORM_ID_alter().
+ *
+ * @see Drupal\queue_ui\Form\ItemDetailForm
+ */
+function dead_letter_queue_ui_form_queue_ui_item_detail_form_alter(array &$form, FormStateInterface $formState, string $formId): void
+{
+    $queueName = $form['table']['#rows']['queue_name']['data']['data'];
+    $queueUi = \Drupal::getContainer()
+        ->get('plugin.manager.queue_ui')
+        ->fromQueueName($queueName);
+
+    if (!$queueUi instanceof DeadLetterQueueUiInterface) {
+        return;
+    }
+
+    $query = \Drupal::database()->select('queue', 'q');
+    $query->addField('q', 'tries');
+    $query->condition('q.item_id', $form['table']['#rows']['id']['data']['data']);
+    $query->range(0, 1);
+    $tries = $query->execute()->fetchField();
+
+    $form['table']['#rows']['tries']['data']['header'] = t('Tries');
+    $form['table']['#rows']['tries']['data']['data'] = $tries;
+}
+
+/**
+ * Inserts a new key/value after the key in the array.
+ *
+ * @param $key
+ *   The key to insert after.
+ * @param $array
+ *   An array to insert in to.
+ * @param $new_key
+ *   The key to insert.
+ * @param $new_value
+ *   An value to insert.
+ *
+ * @return array
+ *   The new array
+ */
+function _dead_letter_queue_ui_array_insert_after($key, array &$array, $new_key, $new_value): array
+{
+    if (!array_key_exists($key, $array)) {
+        throw new \InvalidArgumentException(sprintf('Key %s does not exist', $key));
+    }
+
+    $new = [];
+
+    foreach ($array as $k => $value) {
+        $new[$k] = $value;
+        if ($k === $key) {
+            $new[$new_key] = $new_value;
+        }
+    }
+
+    return $new;
+}

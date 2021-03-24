@@ -1,0 +1,14 @@
+dead_letter_queue_ui.dead_letters:
+    path: admin/config/system/queue-ui/dead-letters/{queue_name}
+    defaults:
+        _form: '\Drupal\dead_letter_queue_ui\Form\DeadLettersForm'
+        _title: 'Inspect dead letter queue'
+    requirements:
+        _permission: 'admin queue_ui'
+
+queue_ui.inspect.reset_tries:
+    path: admin/config/system/queue-ui/{queue_name}/reset-tries/{queue_item}
+    defaults:
+        _form: '\Drupal\dead_letter_queue_ui\Form\ConfirmItemResetTriesForm'
+    requirements:
+        _permission: 'admin queue_ui'

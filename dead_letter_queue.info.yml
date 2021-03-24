@@ -1,0 +1,8 @@
+name: Dead-letter queue
+type: module
+description: Separate queue items that can't be processed successfully
+core: 8.x
+core_version_requirement: ^8 || ^9
+package: Queues
+dependencies:
+    - drupal:system (>= 8.5)
