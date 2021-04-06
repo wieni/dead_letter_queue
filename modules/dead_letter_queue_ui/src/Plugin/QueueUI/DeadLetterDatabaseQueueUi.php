@@ -45,12 +45,15 @@ class DeadLetterDatabaseQueueUi extends DatabaseQueue implements DeadLetterQueue
 
     public function getItems($queue_name)
     {
+        $maxTries = $this->queueFactory->get($queue_name)->getMaxTries();
+
         $query = $this->database->select('queue', 'q');
         $query->addField('q', 'item_id');
         $query->addField('q', 'expire');
         $query->addField('q', 'created');
         $query->addField('q', 'tries');
         $query->condition('q.name', $queue_name);
+        $query->condition('q.tries', $maxTries, '<');
         $query = $query->extend(PagerSelectExtender::class);
         $query = $query->limit(25);
 
