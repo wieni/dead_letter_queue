@@ -4,6 +4,7 @@ namespace Drupal\dead_letter_queue\Queue;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Queue\DatabaseQueue;
 use Drupal\Core\Queue\QueueWorkerManagerInterface;
 use Drupal\Core\Queue\RequeueException;
@@ -17,16 +18,20 @@ class DeadLetterDatabaseQueue extends DatabaseQueue implements DeadLetterQueueIn
     protected $queueManager;
     /** @var ConfigFactoryInterface */
     protected $configFactory;
+    /** @var LoggerChannelInterface */
+    protected $logger;
 
     public function __construct(
         $name,
         Connection $connection,
         QueueWorkerManagerInterface $queueManager,
-        ConfigFactoryInterface $configFactory
+        ConfigFactoryInterface $configFactory,
+        LoggerChannelInterface $logger
     ) {
         parent::__construct($name, $connection);
         $this->queueManager = $queueManager;
         $this->configFactory = $configFactory;
+        $this->logger = $logger;
     }
 
     public function numberOfItems()
@@ -86,6 +91,12 @@ class DeadLetterDatabaseQueue extends DatabaseQueue implements DeadLetterQueueIn
                 $item->data = unserialize($item->data);
 
                 if ($isDeadLetter && $item->tries + 1 >= $maxTries) {
+                    $this->logger->error('Queue item @queueItemId from queue %queueName was moved to the dead letter queue after @tries tries.', [
+                        '@queueItemId' => $item->item_id,
+                        '%queueName' => $this->name,
+                        '@tries' => $item->tries,
+                    ]);
+
                     try {
                         $queueWorker->handleDeadLetter($item->data);
                     } catch (DiscardDeadLetterException $e) {

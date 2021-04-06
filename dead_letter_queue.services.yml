@@ -5,3 +5,8 @@ services:
             - '@database'
             - '@plugin.manager.queue_worker'
             - '@config.factory'
+            - '@logger.channel.dead_letter_queue'
+
+    logger.channel.dead_letter_queue:
+        parent: logger.channel_base
+        arguments: ['dead_letter_queue']
