@@ -172,7 +172,7 @@ class DeadLetterDatabaseQueue extends DatabaseQueue implements DeadLetterQueueIn
         $definition = $this->queueManager->getDefinition($this->name);
         $config = $this->configFactory->get('dead_letter_queue.settings');
 
-        foreach ($config->get('max_tries') ?? [] as $info) {
+        foreach ($config->get('queues') ?? [] as $info) {
             if (!isset($info['queue_name'], $info['max_tries'])) {
                 continue;
             }

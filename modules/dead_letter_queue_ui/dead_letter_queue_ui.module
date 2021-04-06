@@ -80,7 +80,7 @@ function _dead_letter_queue_ui_form_queue_ui_overview_form_alter_submit(array &$
     $config = \Drupal::configFactory()->getEditable('dead_letter_queue.settings');
 
     $existingMaxTries = array_reduce(
-        $config->get('max_tries'),
+        $config->get('queues') ?? [],
         static function (?array $result, array $item) {
             $result[$item['queue_name']] = $item['max_tries'];
             return $result;
@@ -89,7 +89,6 @@ function _dead_letter_queue_ui_form_queue_ui_overview_form_alter_submit(array &$
 
     foreach ($formState->getValue('max_tries') as $name => $maxTries) {
         $existingMaxTries[$name] = $maxTries;
-        $config->set(sprintf('max_tries.%s', $name), (int) $maxTries);
     }
 
     $config->set('queues', array_map(
