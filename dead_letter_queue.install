@@ -7,7 +7,7 @@ use Drupal\dead_letter_queue\Queue\DeadLetterDatabaseQueue;
 /**
  * Add tries column to queue table
  */
-function dead_letter_queue_update_8001(): string
+function dead_letter_queue_update_8002(): string
 {
     try {
         \Drupal::database()->schema()->addField(DeadLetterDatabaseQueue::TABLE_NAME, 'tries', [
