@@ -15,6 +15,11 @@ This package requires PHP 7.1 and Drupal 8.5 or higher. It can be installed usin
 ```
 
 ## How does it work?
+
+## Known issues
+You can't install the module and enable the new queue service in a single deploy. A 
+[Drupal core issue](https://www.drupal.org/project/drupal/issues/3208556) has been created, if you need to do this you 
+can always patch your project using the merge request from that issue.
      
 ## Changelog
 All notable changes to this project will be documented in the
