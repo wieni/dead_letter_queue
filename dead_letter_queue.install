@@ -5,6 +5,22 @@ use Drupal\Core\Database\SchemaObjectExistsException;
 use Drupal\dead_letter_queue\Queue\DeadLetterDatabaseQueue;
 
 /**
+ * Implements @see hook_install()
+ */
+function dead_letter_queue_install(): void
+{
+    try {
+        \Drupal::database()->schema()->addField(DeadLetterDatabaseQueue::TABLE_NAME, 'tries', [
+            'type' => 'int',
+            'not null' => true,
+            'default' => 0,
+            'description' => 'Amount of times processing has been attempted.',
+        ]);
+    } catch (SchemaObjectDoesNotExistException | SchemaObjectExistsException $exception) {
+    }
+}
+
+/**
  * Add tries column to queue table
  */
 function dead_letter_queue_update_8002(): string
