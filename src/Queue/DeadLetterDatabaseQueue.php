@@ -73,6 +73,9 @@ class DeadLetterDatabaseQueue extends DatabaseQueue implements DeadLetterQueueIn
                 return false;
             }
 
+            // Increase the tries counter
+            $item->tries++;
+
             // Try to update the item. Only one thread can succeed in UPDATEing the
             // same row. We cannot rely on REQUEST_TIME because items might be
             // claimed by a single consumer which runs longer than 1 second. If we
@@ -82,19 +85,19 @@ class DeadLetterDatabaseQueue extends DatabaseQueue implements DeadLetterQueueIn
             $update = $this->connection->update(static::TABLE_NAME)
                 ->fields([
                     'expire' => time() + $lease_time,
-                    'tries' => $item->tries + 1,
                 ])
+                ->expression('tries', 'tries+1')
                 ->condition('item_id', $item->item_id)
                 ->condition('expire', 0);
             // If there are affected rows, this update succeeded.
             if ($update->execute()) {
                 $item->data = unserialize($item->data);
 
-                if ($isDeadLetter && $item->tries + 1 >= $maxTries) {
+                if ($isDeadLetter && $item->tries > $maxTries) {
                     $this->logger->error('Queue item @queueItemId from queue %queueName was moved to the dead letter queue after @tries tries.', [
                         '@queueItemId' => $item->item_id,
                         '%queueName' => $this->name,
-                        '@tries' => $item->tries,
+                        '@tries' => $maxTries,
                     ]);
 
                     try {
@@ -135,8 +138,8 @@ class DeadLetterDatabaseQueue extends DatabaseQueue implements DeadLetterQueueIn
             $update = $this->connection->update(static::TABLE_NAME)
                 ->fields([
                     'expire' => 0,
-                    'tries' => $item->tries - 1,
                 ])
+                ->expression('tries', 'tries-1')
                 ->condition('item_id', $item->item_id);
             return $update->execute();
         } catch (\Exception $e) {
