@@ -7,7 +7,7 @@ Dead Letter Queue
 
 > A Drupal 8 module for separating queue items that can't be processed successfully.
 
-## Why?
+## Installation
 This package requires PHP 7.1 and Drupal 8.5 or higher. It can be installed using Composer:
 
 ```bash
