@@ -1,0 +1,13 @@
+on: push
+
+jobs:
+    git-sync:
+        runs-on: ubuntu-latest
+        steps:
+            - name: git-sync
+              uses: wei/git-sync@v3
+              with:
+                  source_repo: wieni/dead_letter_queue
+                  source_branch: main
+                  destination_repo: https://${{ secrets.GITLAB_USERNAME }}:${{ secrets.GITLAB_ACCESS_TOKEN }}@git.drupalcode.org/project/dead_letter_queue.git
+                  destination_branch: main
