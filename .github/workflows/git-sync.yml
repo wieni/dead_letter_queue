@@ -1,13 +1,16 @@
-on: push
+on:
+    - push
+    - delete
 
 jobs:
-    git-sync:
+    sync:
         runs-on: ubuntu-latest
         steps:
-            - name: git-sync
-              uses: wei/git-sync@v3
+            - uses: actions/checkout@v2
               with:
-                  source_repo: wieni/dead_letter_queue
-                  source_branch: main
-                  destination_repo: https://${{ secrets.GITLAB_USERNAME }}:${{ secrets.GITLAB_ACCESS_TOKEN }}@git.drupalcode.org/project/dead_letter_queue.git
-                  destination_branch: main
+                  fetch-depth: 0
+            - uses: wangchucheng/git-repo-sync@v0.1.0
+              with:
+                  target-url: https://git.drupalcode.org/project/dead_letter_queue.git
+                  target-username: ${{ secrets.GITLAB_USERNAME }}
+                  target-token: ${{ secrets.GITLAB_ACCESS_TOKEN }}
