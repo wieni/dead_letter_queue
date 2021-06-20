@@ -2,7 +2,7 @@
     "name": "wieni/dead_letter_queue",
     "type": "drupal-module",
     "description": "A Drupal 8 module for separating queue items that can't be processed successfully.",
-    "license": "MIT",
+    "license": "GPL-2.0-or-later",
     "authors": [
         {
             "name": "Wieni",
