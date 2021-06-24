@@ -11,7 +11,7 @@ Dead Letter Queue
 This package requires PHP 7.1 and Drupal 8.5 or higher. It can be installed using Composer:
 
 ```bash
- composer require wieni/dead_letter_queue
+ composer require drupal/dead_letter_queue
 ```
 
 ## How does it work?
